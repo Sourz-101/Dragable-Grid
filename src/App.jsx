@@ -1,16 +1,25 @@
+import { GridStack } from 'gridstack'
 import './App.css'
-import Test1 from './compoents/GridLayout'
+import GridLayout from './compoents/GridLayout'
+import GridSplitLayout from './compoents/GridSplitLayout'
+import { useEffect } from 'react'
 
 
 
 function App() {
+
+  useEffect(() => {
+    console.log("App.js");
+  }, []);
+
   return (
     <>
       <div className='min-h-screen min-w-max h-full w-full bg-violet-300'>
       {/* <Comp />  */}
       {/* <RGLcomp /> */}
       {/* <RGLResponsive /> */}
-      <Test1 />
+      <GridLayout />
+      {/* <GridSplitLayout /> */}
       </div>
     </>
   )
