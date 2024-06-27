@@ -8,10 +8,6 @@ import { useEffect } from 'react'
 
 function App() {
 
-  useEffect(() => {
-    console.log("App.js");
-  }, []);
-
   return (
     <>
       <div className='min-h-screen min-w-max h-full w-full bg-violet-300'>
