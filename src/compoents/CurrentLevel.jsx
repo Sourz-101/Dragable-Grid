@@ -15,7 +15,7 @@ const CurrentLevel = () => {
           <p className="text-red-600 font-semibold flex flex-nowrap">
             <FaSortDown /> 30%
           </p>
-          <p className="text-gray7">vs last week</p>
+          <p className="text-gray-700">vs last week</p>
         </div>
       </div>
 

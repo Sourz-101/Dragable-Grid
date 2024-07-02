@@ -235,7 +235,7 @@ const worldElectricityProduction = [
 
 const keyToLabel = {
   Temperature: "Temp",
-  Humidity: "Humid",
+  Humidity: "Humidity",
 };
 
 const colors = {
