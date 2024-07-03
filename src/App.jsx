@@ -11,6 +11,7 @@ function App() {
         {/* <Comp />  */}
         {/* <RGLcomp /> */}
         {/* <RGLResponsive /> */}
+        {/* <CurrentLevel props={"new prop"}/> */}
         <GridLayout />
       </div>
     </>

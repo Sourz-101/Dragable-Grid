@@ -14,6 +14,8 @@ const GridLayout = () => {
   const [grid, setGrid] = useState(null);
   const initialized = useRef(false);
 
+  const [currentLevelText, setCurrentLevelText] = useState('Current Level');
+
   const initializeGrid = () => {
     if (initialized.current) return;
     initialized.current = true;
@@ -32,14 +34,12 @@ const GridLayout = () => {
             Comp,
             item.width,
             item.height,
-            item.id
+            item.id,  
+            item.props
           );
         }
       });
     }
-
-    console.log(newGrid);
-    console.log(initialized);
   };
 
   // Use useEffect to call initializeGrid
@@ -48,25 +48,28 @@ const GridLayout = () => {
   }, []);
 
   // Function to add new widget with component
-  const addNewWidgetWithComponent = (gridInstance, Component, width = 1, height = 1, id = null) => {
+  const addNewWidgetWithComponent = (gridInstance, Component, width = 1, height = 1, id = null, props = {}) => {
+
+    console.log("addNewWidgetWithComponent props: ", props);
+
     if (gridInstance) {
       const element = document.createElement("div");
       element.className = "grid-stack-item border border-gray-500 bg-violet-300 overflow-x-auto overflow-y-hidden";
       element.setAttribute("data-gs-width", width);
       element.setAttribute("data-gs-height", height);
       element.setAttribute("data-gs-id", id || `gs-item-${Date.now()}`);
-
+  
       const content = document.createElement("div");
       content.className = "grid-stack-item-content bg-gray-200 relative";
       element.appendChild(content);
-
+  
       gridInstance.addWidget(element);
-
+  
       ReactDOM.createRoot(content).render(
         <div className="relative w-full h-full">
-          <Component />
+          <Component {...props} />
           <button
-            className="absolute top-1 right-1 bg-red-400 text-white p-1 rounded text-xs  hover:bg-red-600 transition-colors"
+            className="absolute top-1 right-1 bg-red-400 text-white p-1 rounded text-xs hover:bg-red-600 transition-colors"
             onClick={() => removeWidget(gridInstance, element)}
           >
             X
@@ -79,23 +82,27 @@ const GridLayout = () => {
   // Function to remove Widget
   const removeWidget = (gridInstance, item) => {
     if (gridInstance) {
-      gridInstance.removeWidget(item);
       const itemId = item.getAttribute("data-gs-id");
-      setComponent(component.filter((comp) => comp.id !== itemId));
+      setComponent((prevComponents) => {
+        const updatedComponents = prevComponents.filter((comp) => comp.id !== itemId);
+        gridInstance.removeWidget(item);
+        return updatedComponents;
+      });
     }
-    console.log("remove widget clicked");
   };
 
   // Function to update context state with new component
-  const updateContext = (comp, width, height) => {
-    const newItem = { comp, width, height, id: `gs-item-${Date.now()}` };
-    setComponent([...component, newItem]);
+  const updateContext = (comp, width, height, props = {}) => {
+    console.log("updateContext props: ", props);
+    const newItem = { comp, width, height, id: `gs-item-${Date.now()}`, props };
+    setComponent((prevComponents) => [...prevComponents, newItem]);
     addNewWidgetWithComponent(
       grid,
       getComponentByName(comp),
       width,
       height,
-      newItem.id
+      newItem.id,
+      props
     );
   };
 
@@ -113,8 +120,6 @@ const GridLayout = () => {
         return null;
     }
   };
-
-  
 
   return (
     <div className="App p-4">
@@ -146,14 +151,25 @@ const GridLayout = () => {
               >
                 <Widget />
               </div>
-              <div
-                className=""
-                onClick={() => {
-                  updateContext("CurrentLevel", 4, 2);
-                  setShowModal(false);
-                }}
-              >
+              <div className="flex flex-col">
                 <CurrentLevel />
+                <div className="flex">
+                  <input 
+                    placeholder="Current Level" 
+                    type="text" 
+                    className="m-1 px-2 py-1 border-black w-full bg-green-300 rounded-md" 
+                    onChange={(e) => setCurrentLevelText(e.target.value)}
+                  />
+                  <button 
+                    className="m-1 bg-green-300 rounded-md inline-flex items-center"
+                    onClick={() => {
+                      updateContext("CurrentLevel", 4, 2, { message: currentLevelText });
+                      setShowModal(false);
+                    }}
+                  >
+                    ✔️
+                  </button>
+                </div>
               </div>
               <div
                 className="w-60 h-32"

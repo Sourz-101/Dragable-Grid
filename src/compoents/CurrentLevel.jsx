@@ -2,14 +2,14 @@ import React from "react";
 import { FaSortDown } from "react-icons/fa6";
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 
+const CurrentLevel = ({ message }) => {
+  console.log("CurrentLevel Logger: ", message);
 
-
-const CurrentLevel = () => {
   return (
     <div className="h-32 rounded-2xl p-4 border-2 shadow-lg flex bg-slate-100">
       <div className="w-full">
         <h1 className="text-gray7 text-lg whitespace-nowrap font-hind font-semibold">
-          Current Level
+          {message || "Current Level"}
         </h1>
         <div className="flex-col text-white text-lg justify-startf">
           <p className="text-red-600 font-semibold flex flex-nowrap">
