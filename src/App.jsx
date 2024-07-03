@@ -2,6 +2,7 @@ import { GridStack } from "gridstack";
 import "./App.css";
 import GridLayout from "./compoents/GridLayout";
 import { useEffect } from "react";
+import CurrentLevel from "./compoents/CurrentLevel";
 
 function App() {
   return (
