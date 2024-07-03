@@ -3,8 +3,7 @@ import { FaSortDown } from "react-icons/fa6";
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 
 const CurrentLevel = ({ message }) => {
-  console.log("CurrentLevel Logger: ", message);
-
+  
   return (
     <div className="h-32 rounded-2xl p-4 border-2 shadow-lg flex bg-slate-100">
       <div className="w-full">

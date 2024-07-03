@@ -1,11 +1,11 @@
 import React from "react";
 
-const Widget = () => {
+const Widget = ({ message }) => {
   return (
     <div className="rounded-2xl p-4 border-2 flex shadow-2xl">
       <div className="w-full max-w-48">
         <h1 className="text-gray-700 text-lg whitespace-nowrap font-hind font-semibold">
-          Motor Status
+          {message || "Motor Status"}
         </h1>
         <div className="flex justify-between items-center">
           <p className="text-green-700 font-semibold text-4xl flex-1 mt-3">

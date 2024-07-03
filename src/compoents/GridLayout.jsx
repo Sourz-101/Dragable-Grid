@@ -15,6 +15,7 @@ const GridLayout = () => {
   const initialized = useRef(false);
 
   const [currentLevelText, setCurrentLevelText] = useState('Current Level');
+  const [motorStatus, setMotorStatus] = useState('Motor Status');
 
   const initializeGrid = () => {
     if (initialized.current) return;
@@ -49,9 +50,6 @@ const GridLayout = () => {
 
   // Function to add new widget with component
   const addNewWidgetWithComponent = (gridInstance, Component, width = 1, height = 1, id = null, props = {}) => {
-
-    console.log("addNewWidgetWithComponent props: ", props);
-
     if (gridInstance) {
       const element = document.createElement("div");
       element.className = "grid-stack-item border border-gray-500 bg-violet-300 overflow-x-auto overflow-y-hidden";
@@ -93,7 +91,6 @@ const GridLayout = () => {
 
   // Function to update context state with new component
   const updateContext = (comp, width, height, props = {}) => {
-    console.log("updateContext props: ", props);
     const newItem = { comp, width, height, id: `gs-item-${Date.now()}`, props };
     setComponent((prevComponents) => [...prevComponents, newItem]);
     addNewWidgetWithComponent(
@@ -142,15 +139,29 @@ const GridLayout = () => {
               X
             </button>
             <div className="bg-white p-2 h-72 flex justify-center items-center gap-5">
-              <div
-                className="w-60"
-                onClick={() => {
-                  updateContext("Widget", 3, 2);
-                  setShowModal(false);
-                }}
-              >
-                <Widget />
+            {/* Green Light Widget */}
+              <div className="w-60 flex flex-col">
+              <Widget />
+                <div className="flex">
+                    <input 
+                      placeholder="Motor Status" 
+                      type="text" 
+                      className="m-1 px-2 py-1 border-black w-full bg-green-300 rounded-md" 
+                      onChange={(e) => setMotorStatus(e.target.value)}
+                    />
+                    <button 
+                      className="m-1 bg-green-300 rounded-md inline-flex items-center"
+                      onClick={() => {
+                        updateContext("Widget", 4, 2, { message: motorStatus });
+                        setShowModal(false);
+                      }}
+                    >
+                      ✔️
+                    </button>
+                  </div>
               </div>
+
+              {/* Current Level Widget */}
               <div className="flex flex-col">
                 <CurrentLevel />
                 <div className="flex">
@@ -171,6 +182,8 @@ const GridLayout = () => {
                   </button>
                 </div>
               </div>
+
+              {/* Graph Widget */}
               <div
                 className="w-60 h-32"
                 onClick={() => {
@@ -180,6 +193,8 @@ const GridLayout = () => {
               >
                 <img src="graphImg.png" height={40} className="w-full h-full" />
               </div>
+
+              {/* Meter Widget */}
               <div
                 className=""
                 onClick={() => {
@@ -189,6 +204,7 @@ const GridLayout = () => {
               >
                 <Meter />
               </div>
+
             </div>
           </div>
         </div>
