@@ -14,15 +14,60 @@ const GridLayout = () => {
   const [grid, setGrid] = useState(null);
   const initialized = useRef(false);
 
-  const [currentLevelText, setCurrentLevelText] = useState("Current Level");
-  const [motorStatus, setMotorStatus] = useState("Motor Status");
+  const [currentLevelText, setCurrentLevelText] = useState('Current Level');
+  const [motorStatus, setMotorStatus] = useState('Motor Status');
+
+  const findBestPosition = (component, newWidth, newHeight) => {
+    const maxGridWidth = 12; // Assuming a 12-column grid
+    const occupiedSpaces = component.map(comp => ({
+      x1: comp.x,
+      y1: comp.y,
+      x2: comp.x + comp.width,
+      y2: comp.y + comp.height
+    }));
+
+    const checkOverlap = (x, y) => {
+      for (let space of occupiedSpaces) {
+        if (x < space.x2 && x + newWidth > space.x1 &&
+            y < space.y2 && y + newHeight > space.y1) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    let bestX = 0;
+    let bestY = 0;
+    let minArea = Infinity;
+
+    for (let y = 0; y <= 100; y++) { // Limit vertical search to prevent infinite loop
+      for (let x = 0; x <= maxGridWidth - newWidth; x++) {
+        if (!checkOverlap(x, y)) {
+          const area = x * y;
+          if (area < minArea) {
+            minArea = area;
+            bestX = x;
+            bestY = y;
+          }
+          break; // Move to next row if we found a spot
+        }
+      }
+      if (minArea !== Infinity) {
+        break; // We found a suitable position
+      }
+    }
+
+    return { x: bestX, y: bestY };
+  };
 
   const initializeGrid = () => {
     if (initialized.current) return;
     initialized.current = true;
 
-    const newGrid = GridStack.init();
-    newGrid.float(true);
+    const newGrid = GridStack.init({
+      float: true,
+      // Add any other GridStack options you need
+    });
     setGrid(newGrid);
 
     // Restore widgets from the context state
@@ -65,12 +110,10 @@ const GridLayout = () => {
     });
   };
 
-  // Use useEffect to call initializeGrid
   useEffect(() => {
     initializeGrid();
   }, []);
 
-  // Function to add new widget with component
   const addNewWidgetWithComponent = (gridInstance, Component, width = 1, height = 1, id = null, x = 0, y = 0, props = {}) => {
     if (gridInstance) {
       const element = document.createElement("div");
@@ -82,13 +125,13 @@ const GridLayout = () => {
       element.setAttribute("data-gs-id", id || `gs-item-${Date.now()}`);
       element.setAttribute("data-gs-component", Component.name);
       element.setAttribute("data-gs-props", JSON.stringify(props));
-  
+
       const content = document.createElement("div");
       content.className = "grid-stack-item-content bg-gray-200 relative";
       element.appendChild(content);
-  
-      gridInstance.addWidget(element, { x, y, width, height }); // Use the provided x and y
-  
+
+      gridInstance.addWidget(element, { x, y, width, height });
+
       ReactDOM.createRoot(content).render(
         <div className="relative w-full h-full">
           <Component {...props} />
@@ -103,27 +146,30 @@ const GridLayout = () => {
     }
   };
 
-  // Function to remove Widget
   const removeWidget = (gridInstance, item) => {
     if (gridInstance) {
       const itemId = item.getAttribute("data-gs-id");
       setComponent((prevComponents) => {
-        const updatedComponents = prevComponents.filter(
-          (comp) => comp.id !== itemId
-        );
+        const updatedComponents = prevComponents.filter((comp) => comp.id !== itemId);
         gridInstance.removeWidget(item);
         return updatedComponents;
       });
     }
   };
 
-  // Function to update context state with new component
   const updateContext = (comp, width, height, props = {}) => {
+    const { x: newX, y: newY } = findBestPosition(component, width, height);
 
-    const { y: lowestY, maxHeight } = findLowestPosition(component);
-    const newY = lowestY; // Add a small gap between widgets  
-
-    const newItem = { comp, width, height, id: `gs-item-${Date.now()}`, x: 0, y: newY, props };
+    const newItem = { 
+      comp, 
+      width, 
+      height, 
+      id: `gs-item-${Date.now()}`, 
+      x: newX, 
+      y: newY,
+      props 
+    };
+    
     setComponent(prevComponents => [...prevComponents, newItem]);
     addNewWidgetWithComponent(
       grid,
@@ -152,19 +198,6 @@ const GridLayout = () => {
     }
   };
 
-  // Function to find the lowest position
-  const findLowestPosition = (components) => {
-    if (components.length === 0) return { y: 0, maxHeight: 0 };
-    
-    return components.reduce((acc, comp) => {
-      const bottom = comp.y + comp.height;
-      if (bottom > acc.y) {
-        return { y: bottom, maxHeight: Math.max(acc.maxHeight, comp.height) };
-      }
-      return acc;
-    }, { y: 0, maxHeight: 0 });
-  };
-
   return (
     <div className="App p-4">
       <button
@@ -190,13 +223,13 @@ const GridLayout = () => {
               <div className="w-60 flex flex-col">
                 <Widget />
                 <div className="flex">
-                  <input
-                    placeholder="Motor Status"
-                    type="text"
-                    className="m-1 px-2 py-1 border-black w-full bg-green-300 rounded-md"
+                  <input 
+                    placeholder="Motor Status" 
+                    type="text" 
+                    className="m-1 px-2 py-1 border-black w-full bg-green-300 rounded-md" 
                     onChange={(e) => setMotorStatus(e.target.value)}
                   />
-                  <button
+                  <button 
                     className="m-1 bg-green-300 rounded-md inline-flex items-center"
                     onClick={() => {
                       updateContext("Widget", 4, 2, { message: motorStatus });
@@ -212,18 +245,16 @@ const GridLayout = () => {
               <div className="flex flex-col">
                 <CurrentLevel />
                 <div className="flex">
-                  <input
-                    placeholder="Current Level"
-                    type="text"
-                    className="m-1 px-2 py-1 border-black w-full bg-green-300 rounded-md"
+                  <input 
+                    placeholder="Current Level" 
+                    type="text" 
+                    className="m-1 px-2 py-1 border-black w-full bg-green-300 rounded-md" 
                     onChange={(e) => setCurrentLevelText(e.target.value)}
                   />
-                  <button
+                  <button 
                     className="m-1 bg-green-300 rounded-md inline-flex items-center"
                     onClick={() => {
-                      updateContext("CurrentLevel", 4, 2, {
-                        message: currentLevelText,
-                      });
+                      updateContext("CurrentLevel", 4, 2, { message: currentLevelText });
                       setShowModal(false);
                     }}
                   >
@@ -240,7 +271,7 @@ const GridLayout = () => {
                   setShowModal(false);
                 }}
               >
-                <img src="graphImg.png" height={40} className="w-full h-full" />
+                <img src="graphImg.png" height={40} className="w-full h-full" alt="Graph" />
               </div>
 
               {/* Meter Widget */}
