@@ -10,12 +10,12 @@ import { useGlobalState } from "../store/GlobalVariable";
 
 const GridLayout = () => {
   const [showModal, setShowModal] = useState(false);
-  const [component, setComponent] = useGlobalState();
+  const { component, setComponent } = useGlobalState();
   const [grid, setGrid] = useState(null);
   const initialized = useRef(false);
 
-  const [currentLevelText, setCurrentLevelText] = useState('Current Level');
-  const [motorStatus, setMotorStatus] = useState('Motor Status');
+  const [currentLevelText, setCurrentLevelText] = useState("Current Level");
+  const [motorStatus, setMotorStatus] = useState("Motor Status");
 
   const initializeGrid = () => {
     if (initialized.current) return;
@@ -35,12 +35,34 @@ const GridLayout = () => {
             Comp,
             item.width,
             item.height,
-            item.id,  
+            item.id,
+            item.x,
+            item.y,
             item.props
           );
         }
       });
     }
+
+    // Listen for change events
+    newGrid.on('change', (event, items) => {
+      setComponent(prevComponents => {
+        const updatedComponents = [...prevComponents];
+        items.forEach(item => {
+          const index = updatedComponents.findIndex(comp => comp.id === item.id);
+          if (index !== -1) {
+            updatedComponents[index] = {
+              ...updatedComponents[index],
+              width: item.width,
+              height: item.height,
+              x: item.x,
+              y: item.y,
+            };
+          }
+        });
+        return updatedComponents;
+      });
+    });
   };
 
   // Use useEffect to call initializeGrid
@@ -49,19 +71,23 @@ const GridLayout = () => {
   }, []);
 
   // Function to add new widget with component
-  const addNewWidgetWithComponent = (gridInstance, Component, width = 1, height = 1, id = null, props = {}) => {
+  const addNewWidgetWithComponent = (gridInstance, Component, width = 1, height = 1, id = null, x = 0, y = 0, props = {}) => {
     if (gridInstance) {
       const element = document.createElement("div");
       element.className = "grid-stack-item border border-gray-500 bg-violet-300 overflow-x-auto overflow-y-hidden";
       element.setAttribute("data-gs-width", width);
       element.setAttribute("data-gs-height", height);
+      element.setAttribute("data-gs-x", x);
+      element.setAttribute("data-gs-y", y);
       element.setAttribute("data-gs-id", id || `gs-item-${Date.now()}`);
+      element.setAttribute("data-gs-component", Component.name);
+      element.setAttribute("data-gs-props", JSON.stringify(props));
   
       const content = document.createElement("div");
       content.className = "grid-stack-item-content bg-gray-200 relative";
       element.appendChild(content);
   
-      gridInstance.addWidget(element);
+      gridInstance.addWidget(element, { x, y, width, height }); // Use the provided x and y
   
       ReactDOM.createRoot(content).render(
         <div className="relative w-full h-full">
@@ -82,7 +108,9 @@ const GridLayout = () => {
     if (gridInstance) {
       const itemId = item.getAttribute("data-gs-id");
       setComponent((prevComponents) => {
-        const updatedComponents = prevComponents.filter((comp) => comp.id !== itemId);
+        const updatedComponents = prevComponents.filter(
+          (comp) => comp.id !== itemId
+        );
         gridInstance.removeWidget(item);
         return updatedComponents;
       });
@@ -91,14 +119,20 @@ const GridLayout = () => {
 
   // Function to update context state with new component
   const updateContext = (comp, width, height, props = {}) => {
-    const newItem = { comp, width, height, id: `gs-item-${Date.now()}`, props };
-    setComponent((prevComponents) => [...prevComponents, newItem]);
+
+    const { y: lowestY, maxHeight } = findLowestPosition(component);
+    const newY = lowestY; // Add a small gap between widgets  
+
+    const newItem = { comp, width, height, id: `gs-item-${Date.now()}`, x: 0, y: newY, props };
+    setComponent(prevComponents => [...prevComponents, newItem]);
     addNewWidgetWithComponent(
       grid,
       getComponentByName(comp),
       width,
       height,
       newItem.id,
+      newItem.x,
+      newItem.y,
       props
     );
   };
@@ -116,6 +150,19 @@ const GridLayout = () => {
       default:
         return null;
     }
+  };
+
+  // Function to find the lowest position
+  const findLowestPosition = (components) => {
+    if (components.length === 0) return { y: 0, maxHeight: 0 };
+    
+    return components.reduce((acc, comp) => {
+      const bottom = comp.y + comp.height;
+      if (bottom > acc.y) {
+        return { y: bottom, maxHeight: Math.max(acc.maxHeight, comp.height) };
+      }
+      return acc;
+    }, { y: 0, maxHeight: 0 });
   };
 
   return (
@@ -139,42 +186,44 @@ const GridLayout = () => {
               X
             </button>
             <div className="bg-white p-2 h-72 flex justify-center items-center gap-5">
-            {/* Green Light Widget */}
+              {/* Green Light Widget */}
               <div className="w-60 flex flex-col">
-              <Widget />
+                <Widget />
                 <div className="flex">
-                    <input 
-                      placeholder="Motor Status" 
-                      type="text" 
-                      className="m-1 px-2 py-1 border-black w-full bg-green-300 rounded-md" 
-                      onChange={(e) => setMotorStatus(e.target.value)}
-                    />
-                    <button 
-                      className="m-1 bg-green-300 rounded-md inline-flex items-center"
-                      onClick={() => {
-                        updateContext("Widget", 4, 2, { message: motorStatus });
-                        setShowModal(false);
-                      }}
-                    >
-                      ✔️
-                    </button>
-                  </div>
+                  <input
+                    placeholder="Motor Status"
+                    type="text"
+                    className="m-1 px-2 py-1 border-black w-full bg-green-300 rounded-md"
+                    onChange={(e) => setMotorStatus(e.target.value)}
+                  />
+                  <button
+                    className="m-1 bg-green-300 rounded-md inline-flex items-center"
+                    onClick={() => {
+                      updateContext("Widget", 4, 2, { message: motorStatus });
+                      setShowModal(false);
+                    }}
+                  >
+                    ✔️
+                  </button>
+                </div>
               </div>
 
               {/* Current Level Widget */}
               <div className="flex flex-col">
                 <CurrentLevel />
                 <div className="flex">
-                  <input 
-                    placeholder="Current Level" 
-                    type="text" 
-                    className="m-1 px-2 py-1 border-black w-full bg-green-300 rounded-md" 
+                  <input
+                    placeholder="Current Level"
+                    type="text"
+                    className="m-1 px-2 py-1 border-black w-full bg-green-300 rounded-md"
                     onChange={(e) => setCurrentLevelText(e.target.value)}
                   />
-                  <button 
+                  <button
                     className="m-1 bg-green-300 rounded-md inline-flex items-center"
                     onClick={() => {
-                      updateContext("CurrentLevel", 4, 2, { message: currentLevelText });
+                      updateContext("CurrentLevel", 4, 2, {
+                        message: currentLevelText,
+                      });
                       setShowModal(false);
                     }}
                   >
@@ -204,7 +253,6 @@ const GridLayout = () => {
               >
                 <Meter />
               </div>
-
             </div>
           </div>
         </div>
